@@ -1,103 +1,70 @@
-# Lia — Real-time visual assistant
+# Lia — real-time visual and voice assistant
 
-<p>
-  <img alt="react, 18" src="https://img.shields.io/badge/react-18-61dafb?labelColor=30363d">
-  <img alt="vite, 5" src="https://img.shields.io/badge/vite-5-646cff?labelColor=30363d">
-  <img alt="model, Gemini Live" src="https://img.shields.io/badge/model-Gemini%20Live-4285f4?labelColor=30363d">
-  <img alt="api key, yours" src="https://img.shields.io/badge/api%20key-yours-8957e5?labelColor=30363d">
-  <br>
-  <img alt="input, screen + text" src="https://img.shields.io/badge/input-screen%20%2B%20text-bf8700?labelColor=30363d">
-  <img alt="output, voice + transcript" src="https://img.shields.io/badge/output-voice%20%2B%20transcript-3fb950?labelColor=30363d">
-  <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-2ea043?labelColor=30363d">
-</p>
+Talk to Lia with your voice: she listens through the microphone, answers out loud, and looks at what you show her.
+Everything runs in the browser, on the user's own Gemini API key.
 
-**Lia watches your screen and answers out loud — in real time, through the Gemini Live API.**
+React + Vite, no backend, no build server: the page talks directly to the Gemini Live API over a WebSocket.
 
-You share a window once, then you ask: "translate this text", "write a tweet". She sees what you
-see, says the answer, and the same answer appears as text in the chat, ready to copy.
+## What it does
 
-<h3 align="center">
-  <a href=".env.example">→ Set up the API key</a>
-</h3>
+- **Real microphone input** — captured in the browser, downsampled to 16 kHz PCM and streamed as `realtimeInput.audio`.
+- **Spoken answers** — 24 kHz PCM chunks scheduled back to back, so the voice never sounds chopped.
+- **Visual input**
+  - on a computer: the shared screen (one frame per second);
+  - on a phone: the back camera (one frame per second);
+  - on a phone: a screenshot picked from the gallery, sent as a single image.
+- **Survives the real world** — automatic reconnection with backoff, `sessionResumption`, `contextWindowCompression`, and a wake-up when the page comes back to the foreground.
+- **Screen wake lock** — the screen no longer turns off mid-conversation, which is what used to cut the microphone.
+- **Installable** — a web app manifest plus a service worker (no cache, so updates land on the next reload).
 
-<p align="center">
-  React + Vite, a free Gemini key, no database.
-  <br>
-  Everything runs in the browser: your screen never leaves the session.
-</p>
+The app adapts to the device: phone mode (camera + screenshot) or computer mode (screen sharing) is detected, there is nothing to configure.
 
-## Contents
+## Getting started
 
-- [Why](#why)
-- [Setup in 3 steps](#setup-in-3-steps)
-- [How to use it](#how-to-use-it)
-- [Free tier limits](#free-tier-limits)
-- [How it works](#how-it-works)
-- [Good to know](#good-to-know)
-- [License](#license)
+```bash
+npm install
+npm run dev
+```
 
-## Why
+Open the local address, paste your Gemini API key on the page once: it is stored in the browser (`localStorage`) and never sent anywhere except to the Gemini API.
 
-Translating a text, writing a tweet, summarizing a document shown on screen: it is a constant
-back-and-forth between a window and an AI tab. Copy, paste, copy again.
+Optional: copy `.env.example` to `.env` and set `VITE_GEMINI_API_KEY` if you prefer to provide the key at build time instead.
 
-Lia removes the back-and-forth. You share your screen once, then you type — "translate this text",
-"write a tweet" — and the answer arrives spoken and written, right next to you. No manual
-screenshot, no copy-paste.
+Production build:
 
-## Setup in 3 steps
+```bash
+npm run build
+npm run preview
+```
 
-1. Clone the repository and install the dependencies: `npm install`
-2. Copy `.env.example` to `.env` and put your Gemini key in `VITE_GEMINI_API_KEY`
-3. Run `npm run dev`, then open the address printed in the terminal.
+## Using it
 
-A Gemini key can be created for free on Google AI Studio. The `.env` file is ignored by git: it never
-ends up in the repository.
+1. Press **Talk to Lia** (or **Talk and share my screen** on a computer).
+2. Allow the microphone; on a computer, pick the screen or window to share.
+3. Talk normally. Lia answers out loud and the conversation is transcribed on screen.
 
-## How to use it
+On a phone:
 
-1. Click **"Share my screen with Lia"** and pick the window or tab she should watch.
-2. Wait for the status line to turn green (**Connected to Gemini Live**).
-3. Type a request — "Translate this text", "Write a tweet" — and send it.
-4. She answers out loud, and the transcript of that answer fills the chat.
+- **Camera** shows Lia what you are pointing at — a place, a sign, a menu, a label.
+- **Send a screenshot** sends a screenshot already saved on the phone (power + volume down to take one); useful when you want her to read your screen, since browsers cannot capture an Android screen.
 
-Frames of the shared window are sent about once per second, so give her a moment after scrolling
-before asking about what is on screen.
+## Known limits
 
-## Free tier limits
+- No browser on Android or iOS can capture the screen (`getDisplayMedia` is not available there), so a phone cannot share its screen live.
+- Android suspends microphone capture when the page goes to the background: the conversation pauses while you use another app and resumes when you come back.
+- The API key is a personal key. It lives in the browser only; never commit one to the repository.
 
-The free Gemini API tier has rate limits and session limits that Google adjusts regularly, and they
-differ per model. Check the current numbers on the
-[rate limits page](https://ai.google.dev/gemini-api/docs/rate-limits) before relying on it for long
-sessions. When a limit is reached the session closes: start screen sharing again.
+## Project layout
 
-## How it works
-
-- Vite serves the React application; `index.html` mounts the root component.
-- The key read from `.env` is injected on the client side at build time (`VITE_` prefix).
-- Screen sharing goes through `getDisplayMedia`; `src/utils/captureFrame.js` draws the shared window
-  on a canvas once per second and sends each frame as a JPEG through the socket.
-- `src/hooks/useGeminiLive.js` opens the Gemini Live WebSocket session, streams those frames and the
-  typed requests, plays the audio answer, and copies its transcript into the chat.
-- The Live models that speak are audio-only: `responseModalities` is `['AUDIO']` and the written
-  answer comes from `outputAudioTranscription`. That is why the same reply shows up twice — heard and
-  read — without two requests.
-- Nothing is stored server-side: there is no server.
-
-## Good to know
-
-- The API key lives in the browser: keep the application on a trusted origin and avoid a
-  shared computer.
-- A Gemini Live session is billed by duration; the free tier cuts it off after a while, which is
-  normal, not a bug.
-- Never share a screen containing passwords or banking data. This is written in the application, and
-  it applies to any visual assistant.
-- Input is the shared screen plus typed text. Speaking into the microphone is not wired yet: the
-  voice you hear is Lia's answer, not your question.
-- The repository contains the full running project: `index.html`, `vite.config.js`, `package.json`,
-  `src/` (app, components, hook, capture utility) and `.env.example`. A `package-lock.json` is not
-  committed, so `npm install` resolves the versions allowed by `package.json`.
+```
+src/App.jsx                  screen, camera, screenshot and install buttons
+src/hooks/useGeminiLive.js   WebSocket session, microphone, audio playback, reconnection
+src/hooks/useWakeLock.js     keeps the screen awake during a conversation
+src/utils/captureFrame.js    screen/camera frames and image files to JPEG
+src/components/              chat panel and share button
+public/                      manifest, service worker, icon
+```
 
 ## License
 
-[MIT](LICENSE) © 2026 moonspiid — free to use, modify and redistribute.
+MIT — see [LICENSE](LICENSE).
