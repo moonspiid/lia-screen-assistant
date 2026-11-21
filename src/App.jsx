@@ -158,7 +158,10 @@ export default function App() {
   if (!apiKey) {
     return (
       <div>
-        <h1>👁️ Lia — Visual assistant</h1>
+        <h1>
+          <img className="logo" src="icon.svg" alt="Lia" />
+          Lia — Visual assistant
+        </h1>
         <p className="status">
           Paste your Gemini key once. It stays in your browser: it is never sent to a
           server and never published.
@@ -179,7 +182,10 @@ export default function App() {
 
   return (
     <div>
-      <h1>👁️ Lia — Visual assistant</h1>
+      <h1>
+        <img className="logo" src="icon.svg" alt="Lia" />
+        Lia — Visual assistant
+      </h1>
       {installEvent && (
         <button className="install" onClick={installLia}>
           📲 Install Lia on the home screen
