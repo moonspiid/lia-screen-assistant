@@ -15,7 +15,7 @@
 **You talk, Lia looks, Lia answers out loud.** A real-time voice and visual assistant: she hears you through the microphone, watches your shared screen (on a computer) or your back camera (on a phone), and replies by voice in a few sentences.
 
 <h3 align="center">
-  <a href="https://moonspiid.github.io/lia-screen-assistant/">↖ Open the app</a>
+  <a href="https://moonspiid.github.io/lia-screen-assistant/" target="_blank" rel="noopener noreferrer">↖ Open the app</a>
 </h3>
 
 <p align="center">
