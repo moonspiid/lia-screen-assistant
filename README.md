@@ -1,92 +1,93 @@
-# Lia — Assistante visuelle en temps réel
+# Lia — Real-time visual assistant
 
 <p>
   <img alt="react, 18" src="https://img.shields.io/badge/react-18-61dafb?labelColor=30363d">
   <img alt="vite, 5" src="https://img.shields.io/badge/vite-5-646cff?labelColor=30363d">
-  <img alt="modèle, Gemini Live" src="https://img.shields.io/badge/model-Gemini%20Live-4285f4?labelColor=30363d">
-  <img alt="clé API, à vous" src="https://img.shields.io/badge/api%20key-yours-8957e5?labelColor=30363d">
+  <img alt="model, Gemini Live" src="https://img.shields.io/badge/model-Gemini%20Live-4285f4?labelColor=30363d">
+  <img alt="api key, yours" src="https://img.shields.io/badge/api%20key-yours-8957e5?labelColor=30363d">
   <br>
-  <img alt="entrée, voix et écran" src="https://img.shields.io/badge/input-voice%20%2B%20screen-bf8700?labelColor=30363d">
-  <img alt="licence MIT" src="https://img.shields.io/badge/license-MIT-2ea043?labelColor=30363d">
+  <img alt="input, voice + screen" src="https://img.shields.io/badge/input-voice%20%2B%20screen-bf8700?labelColor=30363d">
+  <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-2ea043?labelColor=30363d">
 </p>
 
-**Lia regarde votre écran, vous écoute et vous répond à voix haute — en temps réel, via l'API Gemini Live.**
+**Lia watches your screen, listens to you and answers out loud — in real time, through the Gemini Live API.**
 
-Vous parlez, elle voit. Le texte généré apparaît dans le chat, prêt à copier.
+You speak, she sees. The generated text shows up in the chat, ready to copy.
 
 <h3 align="center">
-  <a href=".env.example">→ Configurer la clé API</a>
+  <a href=".env.example">→ Set up the API key</a>
 </h3>
 
 <p align="center">
-  React + Vite, une clé Gemini gratuite, aucune base de données.
+  React + Vite, a free Gemini key, no database.
   <br>
-  Tout tourne dans le navigateur : votre écran ne quitte pas la session.
+  Everything runs in the browser: your screen never leaves the session.
 </p>
 
-## Sommaire
+## Contents
 
-- [Pourquoi](#pourquoi)
-- [Démarrage en 3 étapes](#démarrage-en-3-étapes)
-- [Comment ça s'utilise](#comment-ça-sutilise)
-- [Limites du palier gratuit](#limites-du-palier-gratuit)
-- [Comment ça marche](#comment-ça-marche)
-- [Bon à savoir](#bon-à-savoir)
-- [Licence](#licence)
+- [Why](#why)
+- [Setup in 3 steps](#setup-in-3-steps)
+- [How to use it](#how-to-use-it)
+- [Free tier limits](#free-tier-limits)
+- [How it works](#how-it-works)
+- [Good to know](#good-to-know)
+- [License](#license)
 
-## Pourquoi
+## Why
 
-Traduire un texte, rédiger un tweet, résumer un document affiché à l'écran : ce sont des allers-retours
-constants entre une fenêtre et un onglet d'IA. Copier, coller, recopier.
+Translating a text, writing a tweet, summarizing a document shown on screen: it is a constant
+back-and-forth between a window and an AI tab. Copy, paste, copy again.
 
-Lia supprime l'aller-retour. Vous partagez l'écran une fois, puis vous parlez — « traduis ce texte »,
-« génère un tweet » — et la réponse arrive en texte, à côté. Pas de capture d'écran manuelle, pas de
-copier-coller.
+Lia removes the back-and-forth. You share your screen once, then you talk — “translate this text”,
+“write a tweet” — and the answer arrives as text, right next to you. No manual screenshot, no
+copy-paste.
 
-## Démarrage en 3 étapes
+## Setup in 3 steps
 
-1. Cloner le dépôt et installer les dépendances : `npm install`
-2. Copier `.env.example` en `.env` et y mettre votre clé Gemini dans `VITE_GEMINI_API_KEY`
-3. Lancer : `npm run dev`, puis ouvrir l'adresse affichée dans le terminal.
+1. Clone the repository and install the dependencies: `npm install`
+2. Copy `.env.example` to `.env` and put your Gemini key in `VITE_GEMINI_API_KEY`
+3. Run `npm run dev`, then open the address printed in the terminal.
 
-Une clé Gemini se crée gratuitement sur Google AI Studio. Le fichier `.env` est ignoré par git : il ne
-part jamais dans le dépôt.
+A Gemini key can be created for free on Google AI Studio. The `.env` file is ignored by git: it never
+ends up in the repository.
 
-## Comment ça s'utilise
+## How to use it
 
-1. Cliquer sur **« Partager mon écran avec Lia »**.
-2. Autoriser le micro et l'écran dans la fenêtre du navigateur.
-3. Parler ou écrire : « Traduis ce texte », « Génère un tweet », etc.
-4. Le texte généré apparaît dans le chat, prêt à copier.
+1. Click **“Share my screen with Lia”**.
+2. Allow the microphone and the screen in the browser prompt.
+3. Talk or type: “Translate this text”, “Write a tweet”, and so on.
+4. The generated text shows up in the chat, ready to copy.
 
-## Limites du palier gratuit
+## Free tier limits
 
-- 3 sessions simultanées
-- environ 2 minutes par session
-- 15 requêtes par minute (Gemini 2.0 Flash)
+- 3 simultaneous sessions
+- about 2 minutes per session
+- 15 requests per minute (Gemini 2.0 Flash)
 
-Au-delà, la session se coupe : il suffit de relancer le partage d'écran.
+Beyond that, the session closes: just start screen sharing again.
 
-## Comment ça marche
+## How it works
 
-- Vite sert l'application React ; `index.html` monte le composant racine.
-- La clé lue dans `.env` est injectée côté client au build (préfixe `VITE_`).
-- Le partage d'écran et le micro passent par les API du navigateur (`getDisplayMedia`,
-  `getUserMedia`), puis le flux audio/vidéo part vers la session Gemini Live.
-- Les réponses texte sont rendues dans le chat de l'application ; rien n'est stocké côté serveur, il
-  n'y a pas de serveur.
+- Vite serves the React application; `index.html` mounts the root component.
+- The key read from `.env` is injected on the client side at build time (`VITE_` prefix).
+- Screen sharing and the microphone go through the browser APIs (`getDisplayMedia`,
+  `getUserMedia`), then the audio/video stream is sent to the Gemini Live session.
+- Text answers are rendered in the application chat; nothing is stored server-side, there
+  is no server.
 
-## Bon à savoir
+## Good to know
 
-- La clé API est côté navigateur : gardez l'application sur une origine de confiance et évitez un
-  ordinateur partagé.
-- Une session Gemini Live est facturée à la durée ; le palier gratuit coupe au bout d'environ deux
-  minutes, ce qui est normal, pas un bug.
-- Ne jamais partager un écran contenant des mots de passe ou des données bancaires. C'est écrit dans
-  l'application, et c'est valable pour n'importe quel assistant visuel.
-- Le dépôt ne contient pour l'instant que la coquille du projet (`index.html`, `package.json`,
-  `.env.example`) : le code source React est à ajouter pour que `npm run dev` affiche l'interface.
+- The API key lives in the browser: keep the application on a trusted origin and avoid a
+  shared computer.
+- A Gemini Live session is billed by duration; the free tier cuts off after about two
+  minutes, which is normal, not a bug.
+- Never share a screen containing passwords or banking data. This is written in the
+  application, and it applies to any visual assistant.
+- The repository currently only contains the project shell (`index.html`, `package.json`,
+  `.env.example`): the React source code still has to be added for `npm run dev` to display
+  the interface.
 
-## Licence
+## License
 
-[MIT](LICENSE) © 2026 moonspiid — utilisation, modification et redistribution libres.
+[MIT](LICENSE) © 2026 moonspiid — free to use, modify and redistribute.
