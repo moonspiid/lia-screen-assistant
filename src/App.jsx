@@ -16,16 +16,16 @@ const canShareScreen =
 const canUseCamera =
   typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
 
-// One page, two behaviours: a phone shows its surroundings through the camera,
-// a computer shares its screen. Nothing to choose, it is detected.
+// Une seule page, deux comportements : un téléphone montre ce qui l'entoure avec
+// la caméra, un ordinateur partage son écran. Rien à choisir, c'est détecté.
 const isPhone =
   typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
 
 export default function App() {
   const { connected, connecting, micOn, messages, error, connect, disconnect, sendImage, sendText } =
     useGeminiLive()
-  // Keeps the screen on while the conversation runs: a sleeping screen pauses
-  // the microphone on Android.
+  // Garde l'écran allumé pendant la conversation : un écran qui s'éteint met le
+  // micro en pause sur Android.
   useWakeLock(connected || connecting)
 
   const [apiKey, setApiKey] = useState(getStoredKey())
@@ -41,8 +41,8 @@ export default function App() {
   const camIntervalRef = useRef(null)
   const fileRef = useRef(null)
 
-  // Chrome offers the install only once it considers the app installable; catch
-  // it so the user gets a plain button instead of digging in the menu.
+  // Chrome ne propose l'installation qu'une fois l'app jugée installable : on
+  // l'attrape pour offrir un vrai bouton au lieu de fouiller dans le menu.
   useEffect(() => {
     const onPrompt = (e) => {
       e.preventDefault()
@@ -58,7 +58,7 @@ export default function App() {
     try {
       await installEvent.prompt()
     } catch {
-      // the prompt can only be used once
+      // l'invite ne peut servir qu'une fois
     }
     setInstallEvent(null)
   }
@@ -72,14 +72,14 @@ export default function App() {
     setDraftKey('')
   }
 
-  // The screen request must stay inside the click: a wait of a few hundred
-  // milliseconds and the browser no longer treats it as a user gesture.
+  // La demande de partage doit rester dans le clic : quelques centaines de
+  // millisecondes d'attente et le navigateur n'y voit plus un geste utilisateur.
   const handleStart = async () => {
     setNotice(null)
     connect()
     if (!canShareScreen) {
       setNotice(
-        'No browser can capture the screen of a phone. Show Lia what you want with the camera, or take a screenshot and send it.',
+        "Aucun navigateur ne peut capturer l'écran d'un téléphone. Montre à Lia ce que tu veux avec la caméra, ou envoie-lui une capture d'écran.",
       )
       return
     }
@@ -89,8 +89,8 @@ export default function App() {
       intervalRef.current = intervalId
       setSharing(true)
     } catch (e) {
-      console.warn('Screen capture refused', e)
-      setNotice('Screen sharing refused — Lia keeps listening through the microphone.')
+      console.warn('Partage d’écran refusé', e)
+      setNotice('Partage d’écran refusé — Lia continue de t’écouter avec le micro.')
     }
   }
 
@@ -103,7 +103,8 @@ export default function App() {
     disconnect()
   }
 
-  // The camera replaces screen sharing on a phone: Lia sees what you point at.
+  // La caméra remplace le partage d'écran sur un téléphone : Lia voit ce que tu
+  // lui montres.
   const startCamera = async () => {
     setNotice(null)
     if (!connected) connect()
@@ -115,17 +116,17 @@ export default function App() {
     } catch (e) {
       const name = e?.name
       if (name === 'NotAllowedError') {
-        setNotice('Camera refused: allow the camera in the browser (lock icon next to the address).')
+        setNotice('Caméra refusée : autorise la caméra dans le navigateur (cadenas à côté de l’adresse).')
       } else if (name === 'NotFoundError') {
-        setNotice('No camera found on this device.')
+        setNotice('Aucune caméra trouvée sur cet appareil.')
       } else {
-        setNotice('Camera unavailable on this device.')
+        setNotice('Caméra indisponible sur cet appareil.')
       }
     }
   }
 
-  // No browser on Android can capture the screen, so a screenshot taken with
-  // the phone (power + volume down) is sent as a single image instead.
+  // Aucun navigateur Android ne peut capturer l'écran : une capture prise avec
+  // le téléphone (power + volume bas) est donc envoyée comme une image.
   const handlePhoto = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -135,9 +136,9 @@ export default function App() {
       const jpeg = await fileToJpeg(file)
       if (!connected) connect()
       sendImage(jpeg)
-      setNotice('Image sent — Lia is looking at it.')
+      setNotice('Image envoyée — Lia est en train de la regarder.')
     } catch {
-      setNotice('This image could not be read. Try a regular screenshot.')
+      setNotice("Cette image n'a pas pu être lue. Essaie une capture d'écran classique.")
     }
   }
 
@@ -158,20 +159,20 @@ export default function App() {
   if (!apiKey) {
     return (
       <div>
-        <h1>👁️ Lia — Visual assistant</h1>
+        <h1>👁️ Lia — Assistante visuelle</h1>
         <p className="status">
-          Paste your Gemini key once. It stays in your browser: it is never sent to a
-          server and never published.
+          Colle ta clé Gemini une seule fois. Elle reste dans ton navigateur : elle n’est
+          jamais envoyée à un serveur et jamais publiée.
         </p>
         <form className="input-row" onSubmit={saveKey}>
           <input
             type="password"
             value={draftKey}
             onChange={(e) => setDraftKey(e.target.value)}
-            placeholder="Gemini key (AIza… or AQ.…)"
+            placeholder="Clé Gemini (AIza… ou AQ.…)"
             autoComplete="off"
           />
-          <button type="submit">Save</button>
+          <button type="submit">Enregistrer</button>
         </form>
       </div>
     )
@@ -179,10 +180,10 @@ export default function App() {
 
   return (
     <div>
-      <h1>👁️ Lia — Visual assistant</h1>
+      <h1>👁️ Lia — Assistante visuelle</h1>
       {installEvent && (
         <button className="install" onClick={installLia}>
-          📲 Install Lia on the home screen
+          📲 Installer Lia sur l’écran d’accueil
         </button>
       )}
       <div className="actions">
@@ -194,22 +195,22 @@ export default function App() {
         />
         {canUseCamera && (
           <button className={cameraOn ? 'danger' : 'camera'} onClick={cameraOn ? stopCamera : startCamera}>
-            {cameraOn ? '⏹ Stop the camera' : '📷 Back camera'}
+            {cameraOn ? '⏹ Arrêter la caméra' : '📷 Caméra arrière'}
           </button>
         )}
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
       </div>
       <p className="status">
         {isPhone
-          ? 'Phone mode: Lia sees what you show her with the camera, or a screenshot you send.'
-          : 'Computer mode: Lia sees your shared screen, or your camera.'}
+          ? 'Mode téléphone : Lia voit ce que tu lui montres avec la caméra, ou une capture d’écran que tu envoies.'
+          : 'Mode ordinateur : Lia voit ton écran partagé, ou ta caméra.'}
       </p>
       <div className="status">
         {connected
-          ? `🟢 Connected${micOn ? ' · 🎤 microphone live — just talk' : ' · 🎤 microphone waiting'}${cameraOn ? ' · 📷 camera on' : ''}`
+          ? `🟢 Connectée${micOn ? ' · 🎤 micro actif — parle normalement' : ' · 🎤 micro en attente'}${cameraOn ? ' · 📷 caméra allumée' : ''}`
           : connecting
-            ? '🟠 Connecting…'
-            : '⚪ Disconnected'}
+            ? '🟠 Connexion…'
+            : '⚪ Déconnectée'}
       </div>
       {notice && <div className="status">{notice}</div>}
       {error && <div className="error">{error}</div>}
@@ -219,19 +220,27 @@ export default function App() {
           type="button"
           className="attach"
           onClick={() => fileRef.current?.click()}
-          title="Send a screenshot"
-          aria-label="Send a screenshot"
+          title="Envoyer une capture d’écran"
+          aria-label="Envoyer une capture d’écran"
         >
           +
         </button>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={connected ? 'Ask Lia…' : 'Press the button to talk'}
+          placeholder={connected ? 'Écris à Lia…' : 'Appuie sur le bouton pour parler'}
           disabled={!connected}
         />
-        <button type="submit" disabled={!connected}>Send</button>
+        <button type="submit" disabled={!connected}>Envoyer</button>
       </form>
+      <footer className="footer">
+        <div>© {new Date().getFullYear()} Lia — Assistante visuelle. Tous droits réservés.</div>
+        <div className="social">
+          <a href="https://github.com/moonspiid/lia-screen-assistant" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://x.com/moonspiid" target="_blank" rel="noreferrer">X / Twitter</a>
+          <a href="https://github.com/moonspiid/lia-screen-assistant/issues" target="_blank" rel="noreferrer">Signaler un problème</a>
+        </div>
+      </footer>
     </div>
   )
 }
