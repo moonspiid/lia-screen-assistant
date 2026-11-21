@@ -10,18 +10,19 @@ h1 { font-size: 1.4rem; margin-bottom: 16px; }
 button {
   cursor: pointer; border: none; border-radius: 8px;
   padding: 12px 20px; font-size: 15px; font-weight: 600;
-  background: #6c5ce7; color: white; transition: opacity .2s;
+  background: #ffd43b; color: #17170f; transition: opacity .2s;
 }
 button:hover { opacity: 0.85; }
-button.danger { background: #e74c3c; }
-button.camera { background: #2a2a35; }
-button.install { background: #1e1e28; border: 1px solid #6c5ce7; color: #c8c2ff; margin-bottom: 12px; font-size: 14px; }
+button.danger { background: #e74c3c; color: #fff; }
+button.camera { background: #2a2a35; color: #fff; }
+button.attach { flex: 0 0 auto; width: 46px; padding: 0; font-size: 24px; line-height: 1; border-radius: 8px; }
+button.install { background: #1e1e28; border: 1px solid #ffd43b; color: #ffd43b; margin-bottom: 12px; font-size: 14px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
 .chat { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; max-height: 400px; overflow-y: auto; }
 .msg { padding: 10px 14px; border-radius: 10px; max-width: 85%; white-space: pre-wrap; font-size: 14px; }
 .msg.user { background: #2a2a35; align-self: flex-end; }
-.msg.lia { background: #1e1e28; border-left: 3px solid #6c5ce7; align-self: flex-start; }
+.msg.lia { background: #1e1e28; border-left: 3px solid #ffd43b; align-self: flex-start; }
 .input-row { display: flex; gap: 8px; margin-top: 16px; }
 .input-row input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a22; color: white; font-size: 14px; }
 .status { margin-top: 12px; font-size: 13px; color: #888; }

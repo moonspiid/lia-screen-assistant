@@ -194,12 +194,7 @@ export default function App() {
         />
         {canUseCamera && (
           <button className={cameraOn ? 'danger' : 'camera'} onClick={cameraOn ? stopCamera : startCamera}>
-            {cameraOn ? '⏹ Stop the camera' : '📷 Camera'}
-          </button>
-        )}
-        {isPhone && (
-          <button className="camera" onClick={() => fileRef.current?.click()}>
-            📸 Send a screenshot
+            {cameraOn ? '⏹ Stop the camera' : '📷 Back camera'}
           </button>
         )}
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
@@ -220,6 +215,15 @@ export default function App() {
       {error && <div className="error">{error}</div>}
       <ChatPanel messages={messages} />
       <form className="input-row" onSubmit={handleSend}>
+        <button
+          type="button"
+          className="attach"
+          onClick={() => fileRef.current?.click()}
+          title="Send a screenshot"
+          aria-label="Send a screenshot"
+        >
+          +
+        </button>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
