@@ -14,6 +14,9 @@ button {
 }
 button:hover { opacity: 0.85; }
 button.danger { background: #e74c3c; }
+button.camera { background: #2a2a35; }
+button.install { background: #1e1e28; border: 1px solid #6c5ce7; color: #c8c2ff; margin-bottom: 12px; font-size: 14px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
 .chat { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; max-height: 400px; overflow-y: auto; }
 .msg { padding: 10px 14px; border-radius: 10px; max-width: 85%; white-space: pre-wrap; font-size: 14px; }
