@@ -155,6 +155,16 @@ export default function App() {
     setInput('')
   }
 
+  // Some in-app browsers ignore target="_blank". Opening the link by hand keeps
+  // it in a new tab; when a popup blocker refuses, the link behaves as usual.
+  const openInNewTab = (e) => {
+    const opened = window.open(e.currentTarget.href, '_blank')
+    if (opened) {
+      opened.opener = null
+      e.preventDefault()
+    }
+  }
+
   if (!apiKey) {
     return (
       <div>
@@ -241,9 +251,9 @@ export default function App() {
       <footer className="footer">
         <div>© {new Date().getFullYear()} Lia — Visual assistant. All rights reserved.</div>
         <div className="social">
-          <a href="https://github.com/moonspiid/lia-screen-assistant" target="_blank" rel="noreferrer">GitHub</a>
-          <a href="https://x.com/moonspiid" target="_blank" rel="noreferrer">X / Twitter</a>
-          <a href="https://github.com/moonspiid/lia-screen-assistant/blob/main/README.md#support-this-project" target="_blank" rel="noreferrer">💛 Donate</a>
+          <a href="https://github.com/moonspiid/lia-screen-assistant" target="_blank" rel="noopener noreferrer" onClick={openInNewTab}>GitHub</a>
+          <a href="https://x.com/moonspiid" target="_blank" rel="noopener noreferrer" onClick={openInNewTab}>X / Twitter</a>
+          <a href="https://github.com/moonspiid/lia-screen-assistant/blob/main/README.md#support-this-project" target="_blank" rel="noopener noreferrer" onClick={openInNewTab}>💛 Donate</a>
         </div>
       </footer>
     </div>
