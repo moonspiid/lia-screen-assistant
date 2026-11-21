@@ -1,0 +1,25 @@
+• { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+font-family: system-ui, sans-serif;
+background: #0f0f14;
+color: #e5e5ea;
+min-height: 100vh;
+}
+#root { max-width: 800px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 1.4rem; margin-bottom: 16px; }
+button {
+cursor: pointer; border: none; border-radius: 8px;
+padding: 12px 20px; font-size: 15px; font-weight: 600;
+background: #6c5ce7; color: white; transition: opacity .2s;
+}
+button:hover { opacity: 0.85; }
+button.danger { background: #e74c3c; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+.chat { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; max-height: 400px; overflow-y: auto; }
+.msg { padding: 10px 14px; border-radius: 10px; max-width: 85%; white-space: pre-wrap; font-size: 14px; }
+.msg.user { background: #2a2a35; align-self: flex-end; }
+.msg.lia { background: #1e1e28; border-left: 3px solid #6c5ce7; align-self: flex-start; }
+.input-row { display: flex; gap: 8px; margin-top: 16px; }
+.input-row input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a22; color: white; font-size: 14px; }
+.status { margin-top: 12px; font-size: 13px; color: #888; }
+.error { color: #e74c3c; margin-top: 8px; font-size: 13px; }
