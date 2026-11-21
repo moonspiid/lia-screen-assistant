@@ -17,7 +17,7 @@ button {
   background: #ffd43b; color: #17170f; transition: opacity .2s;
 }
 button:hover { opacity: 0.85; }
-button.danger { background: #e74c3c; color: #fff; }
+button.danger { background: #ffd43b; color: #17170f; }
 button.camera { background: #2a2a35; color: #fff; }
 button.attach { flex: 0 0 auto; width: 46px; padding: 0; font-size: 24px; line-height: 1; border-radius: 8px; }
 button.install { background: #1e1e28; border: 1px solid #ffd43b; color: #ffd43b; margin-bottom: 12px; font-size: 14px; }
