@@ -88,6 +88,7 @@ export function useGeminiLive() {
   const retryCountRef = useRef(0)
   const connectRef = useRef(null)
   const pendingImageRef = useRef(null)
+  const hiddenRef = useRef(false)
 
   const [connected, setConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
@@ -268,6 +269,19 @@ export function useGeminiLive() {
     setConnecting(true)
     readyRef.current = false
 
+    // An older socket may still be lying around: dead but reported OPEN (mobile
+    // browsers do this after the page was hidden), or left over from a previous
+    // attempt. Drop it before opening the new one.
+    const previous = wsRef.current
+    wsRef.current = null
+    if (previous) {
+      try {
+        previous.close()
+      } catch {
+        // already closing
+      }
+    }
+
     const ws = new WebSocket(`${WS_URL}?key=${encodeURIComponent(key)}`)
     wsRef.current = ws
 
@@ -353,7 +367,12 @@ export function useGeminiLive() {
 
     ws.onclose = () => {
       readyRef.current = false
-      if (wsRef.current === ws) wsRef.current = null
+      // A socket replaced on purpose (return from the background, stop) must not
+      // touch the state of the one now in use.
+      if (wsRef.current !== ws) return
+      wsRef.current = null
+      // A turn cut by the drop would stay "streaming" forever in the chat.
+      endTurn()
       setConnected(false)
       if (!wantRef.current) {
         setConnecting(false)
@@ -363,6 +382,9 @@ export function useGeminiLive() {
       setConnecting(true)
       const delay = Math.min(1000 * 2 ** retryCountRef.current, 8000)
       retryCountRef.current += 1
+      // A resumption handle keeps the conversation, but once retries pile up it
+      // is more likely the handle itself that is refused: start a clean session.
+      if (retryCountRef.current >= 3) handleRef.current = null
       clearTimeout(retryTimerRef.current)
       retryTimerRef.current = setTimeout(() => connectRef.current?.(), delay)
     }
@@ -390,8 +412,8 @@ export function useGeminiLive() {
     resumeAudio()
     if (!wantRef.current) return
     const stream = micStreamRef.current
-    const micDead = stream && !stream.getAudioTracks().some((t) => t.readyState === 'live')
-    if (micDead || !stream) startMic()
+    const micDead = !stream || !stream.getAudioTracks().some((t) => t.readyState === 'live')
+    if (micDead) startMic()
     const ws = wsRef.current
     if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
       clearTimeout(retryTimerRef.current)
@@ -400,17 +422,38 @@ export function useGeminiLive() {
     }
   }, [openSocket, resumeAudio, startMic])
 
+  // Back from another app or a sleeping screen: neither the socket nor the
+  // microphone can be trusted. Chrome can keep a dead socket marked OPEN while
+  // Android hands back a track that is still "live" but silent, so Lia looked
+  // connected and answered nothing. Both are rebuilt; the resumption handle
+  // keeps the conversation.
+  const resyncSession = useCallback(() => {
+    resumeAudio()
+    if (!wantRef.current) return
+    stopMic()
+    startMic()
+    clearTimeout(retryTimerRef.current)
+    retryCountRef.current = 0
+    openSocket()
+  }, [openSocket, resumeAudio, startMic, stopMic])
+
   useEffect(() => {
     const onWake = () => {
       if (document.visibilityState === 'visible') wakeUp()
     }
-    const onHide = () => {
-      // Audio scheduled while in the background would play late and out of sync.
-      if (document.visibilityState === 'hidden') stopPlayback()
-    }
     const onVisibility = () => {
-      onHide()
-      onWake()
+      if (document.visibilityState === 'hidden') {
+        // Audio scheduled while in the background would play late and out of sync.
+        hiddenRef.current = true
+        stopPlayback()
+        return
+      }
+      if (hiddenRef.current) {
+        hiddenRef.current = false
+        resyncSession()
+        return
+      }
+      wakeUp()
     }
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('pageshow', onWake)
@@ -423,7 +466,7 @@ export function useGeminiLive() {
       window.removeEventListener('focus', onWake)
       document.removeEventListener('pointerdown', onWake)
     }
-  }, [stopPlayback, wakeUp])
+  }, [resyncSession, stopPlayback, wakeUp])
 
   const connect = useCallback(() => {
     wantRef.current = true
@@ -436,6 +479,11 @@ export function useGeminiLive() {
     wantRef.current = false
     clearTimeout(retryTimerRef.current)
     readyRef.current = false
+    hiddenRef.current = false
+    // Starting again after a stop is a new conversation: an old handle would
+    // only be refused by the server.
+    handleRef.current = null
+    retryCountRef.current = 0
     const ws = wsRef.current
     wsRef.current = null
     if (ws) {
