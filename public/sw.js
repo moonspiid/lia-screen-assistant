@@ -1,5 +1,5 @@
-// Minimal service worker: it only makes the site installable. It never caches
-// anything, so a new version is picked up as soon as the page is reloaded.
+// Service worker volontairement vide : il rend le site installable sans jamais
+// garder d'ancienne version en cache. Chaque rechargement prend la version à jour.
 self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
 self.addEventListener('fetch', () => {})
