@@ -1,13 +1,13 @@
 {
-  "name": "Lia — Assistante visuelle",
+  "name": "Lia — Visual assistant",
   "short_name": "Lia",
-  "description": "Assistante vocale et visuelle en temps réel : tu parles, Lia regarde ton écran ou ta caméra.",
+  "description": "Real-time voice and visual assistant: you talk, Lia watches your screen or your camera and answers out loud.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0f0f14",
   "theme_color": "#ffd43b",
-  "lang": "fr",
+  "lang": "en",
   "icons": [
     {
       "src": "./icon.svg",
