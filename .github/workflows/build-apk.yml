@@ -1,0 +1,81 @@
+name: Compiler l'APK Android
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Show toolchain
+        run: |
+          node --version
+          java -version
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "${ANDROID_HOME:-/usr/local/lib/android/sdk}"/platforms || true
+          ls "${ANDROID_HOME:-/usr/local/lib/android/sdk}"/build-tools || true
+
+      # pwa2apk is not published on npm, so it is installed from source and pinned
+      # to a commit. Its Android template needs three fixes to build on current
+      # runner images: AGP 8.2.2 cannot read the SDK metadata shipped there
+      # (SDK XML v4), AGP 8.7 needs Gradle 8.9, and the template uses
+      # Theme.AppCompat.NoActionBar without declaring the AppCompat dependency.
+      - name: Install pwa2apk
+        run: |
+          git clone https://github.com/Tonihj77-T/pwa2apk.git "$RUNNER_TEMP/pwa2apk"
+          git -C "$RUNNER_TEMP/pwa2apk" checkout b6ac9169318376413f163f6e6bb8e26f33042be6
+          template="$RUNNER_TEMP/pwa2apk/src/lib/project-builder.js"
+          sed -i "s#com.android.tools.build:gradle:8.2.2#com.android.tools.build:gradle:8.7.3#" "$template"
+          sed -i 's#gradle-8.5-bin.zip#gradle-8.9-bin.zip#' "$template"
+          sed -i 's#GRADLE_VERSION="8.5"#GRADLE_VERSION="8.9"#' "$template"
+          sed -i "s#^    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'#&\n    implementation 'androidx.appcompat:appcompat:1.6.1'#" "$template"
+          npm install --prefix "$RUNNER_TEMP/pwa2apk" --no-audit --no-fund
+          npm install -g "$RUNNER_TEMP/pwa2apk"
+          pwa2apk --version
+
+      # --no-build: the tool's own Gradle call is capped at 5 minutes, too short
+      # for a cold Gradle download, so the build runs in the next step.
+      - name: Generate Android project
+        run: |
+          pwa2apk \
+            --url https://moonspiid.github.io/lia-screen-assistant/ \
+            --name "Lia" \
+            --package com.moonspiid.lia \
+            --icon public/icon.svg \
+            --output output \
+            --no-build
+
+      - name: Build release APK
+        working-directory: output/android-project
+        run: |
+          ./gradlew assembleRelease --no-daemon \
+            -PRELEASE_STORE_FILE="$PWD/release.keystore" \
+            -PRELEASE_STORE_PASSWORD=pwa2apk-default \
+            -PRELEASE_KEY_ALIAS=android \
+            -PRELEASE_KEY_PASSWORD=pwa2apk-default
+
+      - name: Collect APK
+        run: |
+          cp output/android-project/app/build/outputs/apk/release/app-release.apk output/lia-v1.apk
+          ls -l output/lia-v1.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lia-apk
+          path: output/lia-v1.apk
+          if-no-files-found: error
+          retention-days: 30
