@@ -10,9 +10,11 @@ permissions:
   pages: write
   id-token: write
 
+# A running deployment must not be cancelled: GitHub Pages ends up with a
+# half-published site when an in-flight deploy is interrupted.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -22,7 +24,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
+          cache: npm
+      - run: npm ci
       - run: npm run build
       - uses: actions/configure-pages@v5
         with:
