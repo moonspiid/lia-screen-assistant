@@ -1,0 +1,112 @@
+name: Compiler l'APK Android
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Show toolchain
+        run: |
+          node --version
+          java -version
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "${ANDROID_HOME:-/usr/local/lib/android/sdk}"/platforms || true
+          ls "${ANDROID_HOME:-/usr/local/lib/android/sdk}"/build-tools || true
+
+      # The same keystore must sign every release, otherwise an update cannot be
+      # installed over the previous APK and the assetlinks fingerprint changes.
+      - name: Restore signing keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::KEYSTORE_B64 secret is missing"
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+
+      # pwa2apk is not published on npm, so it is installed from source and pinned
+      # to a commit. Its Android template needs three fixes to build on current
+      # runner images: AGP 8.2.2 cannot read the SDK metadata shipped there
+      # (SDK XML v4), AGP 8.7 needs Gradle 8.9, and the template uses
+      # Theme.AppCompat.NoActionBar without declaring the AppCompat dependency.
+      - name: Install pwa2apk
+        run: |
+          git clone https://github.com/Tonihj77-T/pwa2apk.git "$RUNNER_TEMP/pwa2apk"
+          git -C "$RUNNER_TEMP/pwa2apk" checkout b6ac9169318376413f163f6e6bb8e26f33042be6
+          template="$RUNNER_TEMP/pwa2apk/src/lib/project-builder.js"
+          sed -i "s#com.android.tools.build:gradle:8.2.2#com.android.tools.build:gradle:8.7.3#" "$template"
+          sed -i 's#gradle-8.5-bin.zip#gradle-8.9-bin.zip#' "$template"
+          sed -i 's#GRADLE_VERSION="8.5"#GRADLE_VERSION="8.9"#' "$template"
+          sed -i "s#^    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'#&\n    implementation 'androidx.appcompat:appcompat:1.6.1'#" "$template"
+          npm install --prefix "$RUNNER_TEMP/pwa2apk" --no-audit --no-fund
+          npm install -g "$RUNNER_TEMP/pwa2apk"
+          pwa2apk --version
+
+      # --no-build: the tool's own Gradle call is capped at 5 minutes, too short
+      # for a cold Gradle download, so the build runs in the next step.
+      - name: Generate Android project
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          pwa2apk \
+            --url https://moonspiid.github.io/lia-screen-assistant/ \
+            --name "Lia" \
+            --package com.moonspiid.lia \
+            --icon public/icon.svg \
+            --app-version "${{ github.run_number }}" \
+            --keystore-path "$RUNNER_TEMP/release.keystore" \
+            --keystore-password "$KEYSTORE_PASSWORD" \
+            --key-alias "$KEY_ALIAS" \
+            --key-password "$KEY_PASSWORD" \
+            --output output \
+            --no-build
+
+      - name: Build release APK
+        working-directory: output/android-project
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease --no-daemon \
+            -PRELEASE_STORE_FILE="$PWD/release.keystore" \
+            -PRELEASE_STORE_PASSWORD="$KEYSTORE_PASSWORD" \
+            -PRELEASE_KEY_ALIAS="$KEY_ALIAS" \
+            -PRELEASE_KEY_PASSWORD="$KEY_PASSWORD"
+
+      - name: Collect APK
+        run: |
+          cp output/android-project/app/build/outputs/apk/release/app-release.apk \
+            "output/lia-v${{ github.run_number }}.apk"
+          ls -l output/lia-v*.apk
+
+      - name: Show signing certificate
+        run: |
+          apksigner=$(ls "${ANDROID_HOME:-/usr/local/lib/android/sdk}"/build-tools/*/apksigner | tail -1)
+          "$apksigner" verify --print-certs output/lia-v*.apk | head -3
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lia-apk
+          path: output/lia-v*.apk
+          if-no-files-found: error
+          retention-days: 30
